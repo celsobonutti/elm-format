@@ -25,6 +25,12 @@ default-extensions:
   - LambdaCase
   - OverloadedStrings
   - ScopedTypeVariables
+  - BlockArguments
+
+ghc-options:
+  - -no-hs-main
+  - -optl-mexec-model=reactor
+  - "-optl-Wl,--export=hs_init,--export=malloc,--export=mallocPtr,--export=free,--export=formatRaw, -o Format.wasm"
 
 dependencies:
   aeson: ">= 2.1.0.0 && < 2.2"

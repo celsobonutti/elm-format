@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 
-module ElmFormat.Cli (mainIO, main, main') where
+module ElmFormat.Cli (mainIO, main, main', formatSimple) where
 
 import AST.Module (Module)
 import AST.Structure
@@ -9,10 +9,12 @@ import CommandLine.Program (ProgramIO)
 import CommandLine.TransformFiles (TransformMode (..), ValidateMode (..))
 import CommandLine.World
 import CommandLine.World.RealWorld (runRealWorld)
+import Data.Either (fromRight)
 import Data.Functor.Identity
 import Data.Text.Encoding
 import ElmFormat.Messages
 import ElmVersion
+import Foreign.C.String (CString, newCString, peekCString)
 import Reporting.Annotation (Located)
 
 import qualified CommandLine.Program as Program
@@ -47,6 +49,11 @@ data Mode
     = FormatMode
     | JsonMode Flags.JsonMode
     | ValidateMode
+
+formatSimple :: Text.Text -> Text.Text
+formatSimple input = do
+    fromRight "" $
+        Render.render Elm_0_19 <$> parseModule Elm_0_19 ("", input)
 
 determineSource :: Bool -> Either [ResolveFiles.Error] [FilePath] -> Either ErrorMessage Source
 determineSource stdin inputFiles =
