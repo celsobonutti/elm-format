@@ -1,21 +1,18 @@
-module CommandLine.Program (ProgramResult(..), ProgramIO, run, failed, CommandLine.Program.error, showUsage, liftEither, liftM, liftME, mapError) where
+module CommandLine.Program (ProgramResult (..), ProgramIO, run, failed, CommandLine.Program.error, showUsage, liftEither, liftM, liftME, mapError) where
 
 -- Common handling for command line programs
 
-import Prelude ()
-import Relude hiding (putStrLn, exitSuccess, exitFailure)
-
-import CommandLine.InfoFormatter (ToConsole(..))
+import CommandLine.InfoFormatter (ToConsole (..))
 import CommandLine.World
 import qualified Data.Text as Text
-import System.Exit (ExitCode(..))
+import System.Exit (ExitCode (..))
+import Prelude hiding (error, putStrLn)
+import qualified Prelude
 
 import qualified Options.Applicative as OptParse
 
-
 class MapError f where
     mapError :: (x -> y) -> f x a -> f y a
-
 
 data ProgramResult err a
     = ShowUsage
@@ -47,9 +44,8 @@ instance Monad (ProgramResult err) where
     (ProgramError err) >>= _ = ProgramError err
     (ProgramSuccess a) >>= f = f a
 
-
-newtype ProgramIO m x a =
-    ProgramIO (m (ProgramResult x a))
+newtype ProgramIO m x a
+    = ProgramIO (m (ProgramResult x a))
     deriving (Functor)
 
 instance Functor m => MapError (ProgramIO m) where
@@ -65,13 +61,13 @@ instance Monad m => Applicative (ProgramIO m x) where
 
 instance Monad m => Monad (ProgramIO m x) where
     (ProgramIO m) >>= f = ProgramIO (m >>= f')
-        where
-            f' r =
-                case r of
-                    ShowUsage -> return $ ShowUsage
-                    ProgramError x -> return $ ProgramError x
-                    ProgramFailed -> return $ ProgramFailed
-                    ProgramSuccess a -> (\(ProgramIO z) -> z) $ f a
+      where
+        f' r =
+            case r of
+                ShowUsage -> return $ ShowUsage
+                ProgramError x -> return $ ProgramError x
+                ProgramFailed -> return $ ProgramFailed
+                ProgramSuccess a -> (\(ProgramIO z) -> z) $ f a
 
 failed :: Applicative m => ProgramIO m x a
 failed = ProgramIO $ pure $ ProgramFailed
@@ -92,14 +88,13 @@ liftM m = ProgramIO (ProgramSuccess <$> m)
 liftME :: Monad m => m (Either x a) -> ProgramIO m x a
 liftME m = ProgramIO (m >>= ((\(ProgramIO z) -> z) . liftEither))
 
-
 run ::
     World m =>
     ToConsole err =>
-    OptParse.ParserInfo flags
-    -> (flags -> ProgramIO m err ())
-    -> [String]
-    -> m ()
+    OptParse.ParserInfo flags ->
+    (flags -> ProgramIO m err ()) ->
+    [String] ->
+    m ()
 run flagsParser run' args =
     let
         parsePreferences =
@@ -107,32 +102,28 @@ run flagsParser run' args =
 
         parseFlags =
             OptParse.execParserPure parsePreferences flagsParser
-    in
-    do
-        flags <- handleParseResult $ parseFlags args
-        case flags of
-            Nothing -> return ()
-            Just flags' ->
-                do
-                    result <- (\(ProgramIO m) -> m) $ run' flags'
-                    case result of
-                        ShowUsage ->
-                            (handleParseResult $ parseFlags ["--help"])
-                                -- TODO: handleParseResult is exitSuccess, so we never get to exitFailure
-                                >> exitFailure
+     in
+        do
+            flags <- handleParseResult $ parseFlags args
+            case flags of
+                Nothing -> return ()
+                Just flags' ->
+                    do
+                        result <- (\(ProgramIO m) -> m) $ run' flags'
+                        case result of
+                            ShowUsage ->
+                                (handleParseResult $ parseFlags ["--help"])
+                                    -- TODO: handleParseResult is exitSuccess, so we never get to exitFailure
+                                    >> exitFailure
+                            ProgramError err ->
+                                putStrLnStderr (toConsole err)
+                                    >> exitFailure
+                            ProgramSuccess () ->
+                                exitSuccess
+                            ProgramFailed ->
+                                exitFailure
 
-                        ProgramError err ->
-                            putStrLnStderr (toConsole err)
-                                >> exitFailure
-
-                        ProgramSuccess () ->
-                            exitSuccess
-
-                        ProgramFailed ->
-                            exitFailure
-
-
-{-| copied from Options.Applicative -}
+-- | copied from Options.Applicative
 handleParseResult :: World m => OptParse.ParserResult a -> m (Maybe a)
 handleParseResult (OptParse.Success a) = return (Just a)
 handleParseResult (OptParse.Failure failure) = do
@@ -140,11 +131,11 @@ handleParseResult (OptParse.Failure failure) = do
     let (msg, exit) = OptParse.renderFailure failure (Text.unpack progn)
     case exit of
         ExitSuccess -> putStrLn (Text.pack msg) *> exitSuccess *> return Nothing
-        _           -> putStrLnStderr (Text.pack msg) *> exitFailure *> return Nothing
+        _ -> putStrLnStderr (Text.pack msg) *> exitFailure *> return Nothing
 handleParseResult (OptParse.CompletionInvoked _) =
     -- do
     --     progn <- getProgName
     --     msg <- OptParse.execCompletion compl progn
     --     putStr msg
     --     const undefined <$> exitSuccess
-    Relude.error "Shell completion not yet implemented"
+    Prelude.error "Shell completion not yet implemented"

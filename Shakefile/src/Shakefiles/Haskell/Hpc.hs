@@ -1,16 +1,14 @@
 module Shakefiles.Haskell.Hpc where
 
 import Development.Shake
-import Shakefiles.Prelude
 import Development.Shake.FilePath
+import Shakefiles.Prelude
 import System.Directory (createFileLink)
-import Relude (unlessM)
 
 mergeTixFiles :: [FilePath] -> FilePath -> Action ()
 mergeTixFiles tixs out = do
     need tixs
     cmd_ "hpc" "sum" ("--output=" <> out) tixs
-
 
 rules :: String -> Rules ()
 rules gitSha = do
@@ -29,7 +27,7 @@ rules gitSha = do
         let report = nTimes 3 dropDirectory1 $ dropExtension out
         let tixFile = "_build/hpc/run" </> report <.> "tix"
         let outFile = "_coverage" </> report </> gitSha <.> "txt"
-        sourceHash <- hashNeed [ tixFile ]
+        sourceHash <- hashNeed [tixFile]
         cmd_ (FileStdout outFile) "hpc" "report" tixFile hpcConfig
         writeFileChanged out sourceHash
 
@@ -37,11 +35,15 @@ rules gitSha = do
         let report = nTimes 3 dropDirectory1 $ dropExtension out
         let tixFile = "_build/hpc/run" </> report <.> "tix"
         let outDir = "_coverage" </> report </> gitSha
-        sourceHash <- hashNeed [ tixFile ]
-        cmd_ "hpc" "markup" tixFile
+        sourceHash <- hashNeed [tixFile]
+        cmd_
+            "hpc"
+            "markup"
+            tixFile
             ("--destdir=" <> outDir)
             hpcConfig
         let outIndex = outDir </> "index.html"
         unlessM (doesFileExist outIndex) $
-            liftIO $ createFileLink "hpc_index.html" outIndex
+            liftIO $
+                createFileLink "hpc_index.html" outIndex
         writeFileChanged out sourceHash

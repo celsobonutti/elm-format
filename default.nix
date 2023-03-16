@@ -21,6 +21,11 @@ let
       aeson = self.aeson_2_1_1_0;
       text = self.text_2_0_1;
 
+      fixCyclicReference = drv:
+        pkgs.haskell.lib.overrideCabal drv (_: {
+          enableSeparateBinOutput = false;
+        });
+
       mkPkg = name: path: args:
         overrideCabal (self.callCabal2nix name path args) (orig: {
           src = lib.cleanSourceWith {

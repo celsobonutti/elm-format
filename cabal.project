@@ -5,7 +5,10 @@ packages:
     ./elm-format-test-lib,
     ./
     ./Shakefile
-with-compiler: ghc-9.2.5
+
+with-compiler: /Users/dokkora/fun/ghc/_build/stage1/bin/wasm32-wasi-ghc
+
+with-hc-pkg: /Users/dokkora/fun/ghc/_build/stage1/bin/wasm32-wasi-ghc-pkg
 
 constraints:
   -- ansi-terminal-0.11.1 has issues with Win32-2.10.* (which is packaged with ghc-9.0)

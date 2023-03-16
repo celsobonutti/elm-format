@@ -1,15 +1,15 @@
 {-# LANGUAGE TypeFamilies #-}
+
 module CommandLine.World where
 
-import Prelude ()
-import Relude hiding (getLine, putStr)
-
+import Control.DeepSeq
+import Data.Text
+import Prelude hiding (getLine, putStr, putStrLn)
 
 data FileType
     = IsFile
     | IsDirectory
     | DoesNotExist
-
 
 class Monad m => World m where
     readUtf8File :: FilePath -> m Text
@@ -35,10 +35,10 @@ class Monad m => World m where
         do
             isFile <- doesFileExist path
             isDirectory <- doesDirectoryExist path
-            return $ case ( isFile, isDirectory ) of
-                ( True, _ ) -> IsFile
-                ( _, True ) -> IsDirectory
-                ( False, False ) -> DoesNotExist
+            return $ case (isFile, isDirectory) of
+                (True, _) -> IsFile
+                (_, True) -> IsDirectory
+                (False, False) -> DoesNotExist
 
     getProgName :: m Text
 
@@ -46,18 +46,19 @@ class Monad m => World m where
     getLine :: m Text
     getYesOrNo :: m Bool
     getYesOrNo =
-      do  flushStdout
-          input <- getLine
-          case input of
-            "y" -> return True
-            "n" -> return False
-            _   -> putStr "Must type 'y' for yes or 'n' for no: " *> getYesOrNo
+        do
+            flushStdout
+            input <- getLine
+            case input of
+                "y" -> return True
+                "n" -> return False
+                _ -> putStr "Must type 'y' for yes or 'n' for no: " *> getYesOrNo
     putStr :: Text -> m ()
     putStrLn :: Text -> m ()
     writeStdout :: Text -> m ()
     flushStdout :: m ()
     putStrStderr :: Text -> m ()
-    putStrLnStderr :: Text -> m()
+    putStrLnStderr :: Text -> m ()
 
     exitFailure :: m ()
     exitSuccess :: m ()

@@ -3,7 +3,6 @@ module Main where
 import qualified ElmFormat.Cli
 import qualified System.Environment
 
-
 main :: IO ()
 main =
     do
