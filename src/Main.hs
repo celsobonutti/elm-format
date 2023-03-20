@@ -28,9 +28,11 @@ formatRaw :: Ptr CChar -> Int -> Ptr (Ptr CChar) -> IO Int
 formatRaw inputPtr inputLen outputPtrPtr = do
     input <-
         decodeUtf8 <$> BU.unsafePackMallocCStringLen (inputPtr, inputLen)
-    let outputBytes = encodeUtf8 $ Cli.formatSimple input
-    BU.unsafeUseAsCStringLen outputBytes \(buf, len) -> do
-        outputPtr <- mallocBytes len
-        poke outputPtrPtr outputPtr
-        copyBytes outputPtr buf len
-        pure len
+    case encodeUtf8 <$> Cli.formatSimple input of
+        Left err -> pure (-1)
+        Right outputBytes ->
+            BU.unsafeUseAsCStringLen outputBytes \(buf, len) -> do
+                outputPtr <- mallocBytes len
+                poke outputPtrPtr outputPtr
+                copyBytes outputPtr buf len
+                pure len

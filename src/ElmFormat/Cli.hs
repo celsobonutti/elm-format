@@ -50,10 +50,9 @@ data Mode
     | JsonMode Flags.JsonMode
     | ValidateMode
 
-formatSimple :: Text.Text -> Text.Text
+formatSimple :: Text.Text -> Either InfoMessage Text.Text
 formatSimple input = do
-    fromRight "" $
-        Render.render Elm_0_19 <$> parseModule Elm_0_19 ("", input)
+    Render.render Elm_0_19 <$> parseModule Elm_0_19 ("", input)
 
 determineSource :: Bool -> Either [ResolveFiles.Error] [FilePath] -> Either ErrorMessage Source
 determineSource stdin inputFiles =
