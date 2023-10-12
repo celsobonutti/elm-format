@@ -4,9 +4,9 @@ version: 0.0.0.1
 synopsis: Markdown parsing for Elm documentation comments
 license: BSD-3-Clause
 license-file: LICENSE
-author:     Aaron VonderHaar
+author: Aaron VonderHaar
 maintainer: gruen0aermel@gmail.com
-copyright:  See https://github.com/avh4/elm-format/blob/master/LICENSE
+copyright: See https://github.com/avh4/elm-format/blob/master/LICENSE
 
 build-type: Simple
 
@@ -28,8 +28,7 @@ dependencies:
   base: ">= 4.15.0.0 && < 5"
   containers: ">= 0.6.5.1 && < 0.7"
   mtl: ">= 2.2.2 && < 3"
-  text: ">= 2.0 && < 3"
-
+  text: ">= 2.1 && < 3"
 
 library:
   source-dirs:
